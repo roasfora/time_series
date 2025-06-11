@@ -20,11 +20,17 @@ FORECAST_OUTPUT_DIR = os.getcwd()  # Save in the same folder as the script
 df = pd.read_csv("data.csv")
 df.columns = df.columns.str.strip()
 
+# Clean and convert columns
 df[FEATURE] = df[FEATURE].astype(str).str.replace(",", "").astype(float)
 df[TARGET] = df[TARGET].astype(str).str.replace(",", "").astype(float)
 
-df_train = df.dropna(subset=[FEATURE, TARGET])
-X = df_train[[FEATURE]].values
+# ---- Create Lag Features ---- #
+df["lag_1"] = df[FEATURE].shift(1)
+df["lag_2"] = df[FEATURE].shift(2)
+
+# Filter for training: drop rows with NaNs in lags or target
+df_train = df.dropna(subset=[FEATURE, TARGET, "lag_1", "lag_2"])
+X = df_train[[FEATURE, "lag_1", "lag_2"]].values
 y = df_train[TARGET].values
 
 # ---- Train/Test Split ---- #
@@ -32,7 +38,10 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_
 
 # ---- Prepare Future Inputs ---- #
 df_future = df[df[TARGET].isna()].copy()
-X_future = df_future[[FEATURE]].values
+df_future["lag_1"] = df[FEATURE].shift(1)
+df_future["lag_2"] = df[FEATURE].shift(2)
+df_future = df_future.dropna(subset=["lag_1", "lag_2"])
+X_future = df_future[[FEATURE, "lag_1", "lag_2"]].values
 
 # ---- Define Models ---- #
 models = {
@@ -63,10 +72,7 @@ for name, model in models.items():
     # Forecast
     if X_future.shape[0] > 0:
         df_future[name] = model.predict(X_future)
-
-        # Save forecast
-        forecast_path = os.path.join(FORECAST_OUTPUT_DIR, f"{name}_forecast.csv")
-        df_future.to_csv(forecast_path, index=False)
+        df_future.to_csv(os.path.join(FORECAST_OUTPUT_DIR, f"{name}_forecast.csv"), index=False)
 
     # Plot actual vs predicted
     plt.figure()
@@ -76,11 +82,8 @@ for name, model in models.items():
     plt.ylabel("Predicted")
     plt.title(f"{name.upper()} Forecast\nMAPE: {mape:.2%}, R²: {r2:.4f}")
     plt.tight_layout()
-
-    plot_path = os.path.join(FORECAST_OUTPUT_DIR, f"{name}_forecast.png")
-    plt.savefig(plot_path)
+    plt.savefig(os.path.join(FORECAST_OUTPUT_DIR, f"{name}_forecast.png"))
     plt.close()
 
 # ---- Save Metrics ---- #
-df_metrics = pd.DataFrame(metrics)
-df_metrics.to_csv(os.path.join(FORECAST_OUTPUT_DIR, "model_metrics.csv"), index=False)
+pd.DataFrame(metrics).to_csv(os.path.join(FORECAST_OUTPUT_DIR, "model_metrics.csv"), index=False)
