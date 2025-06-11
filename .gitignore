@@ -1,0 +1,50 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment
+venv/
+env/
+.venv/
+ENV/
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Logs and debug
+*.log
+
+# Mac/Windows/Linux OS files
+.DS_Store
+Thumbs.db
+
+# Python environment files
+*.egg-info/
+.eggs/
+dist/
+build/
+
+# IDE settings
+.vscode/
+.idea/
+
+# Data and output
+/data/*.csv
+/data/*.png
+/data/*.xlsx
+/data/*.json
+
+# Model artifacts
+*.pkl
+*.joblib
+
+# Test artifacts
+htmlcov/
+.coverage
+coverage.xml
+*.cover
+.pytest_cache/
+
+# MLflow or experiment tracking (optional)
+mlruns/
